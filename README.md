@@ -42,4 +42,3 @@ Checklist manual em `docs/TESTES.md`.
 - Trocar os preços de exemplo pelos reais.
 - Conferir cores e fontes com o protótipo e ajustar em `theme.dart`.
 - Menu lateral: o protótipo não mostra o conteúdo dele; usei Início, Cardápio e Contato.
-
