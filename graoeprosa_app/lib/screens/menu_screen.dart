@@ -1,120 +1,162 @@
 import 'package:flutter/material.dart';
-
 import '../data/menu_data.dart';
+import '../models/product.dart';
 import '../theme.dart';
+import 'product_detail_screen.dart';
 
 class MenuScreen extends StatefulWidget {
-  const MenuScreen({super.key, required this.onBack});
-
   final VoidCallback onBack;
+
+  const MenuScreen({super.key, required this.onBack});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  String _category = categories.first;
+  String _selectedCategory = 'Todos';
+  final List<String> _categories = ['Todos', 'Cafés', 'Salgados'];
 
-  @override
-  Widget build(BuildContext context) {
-    final items = _category == 'Todos'
-        ? menu
-        : menu.where((p) => p.category == _category).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _PageHeader(title: 'Cardápio', onBack: widget.onBack),
-        SizedBox(
-          height: 48,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (_, i) {
-              final selected = _category == categories[i];
-              return ChoiceChip(
-                label: Text(categories[i]),
-                selected: selected,
-                showCheckmark: false,
-                onSelected: (_) => setState(() => _category = categories[i]),
-                backgroundColor: Colors.white,
-                selectedColor: espresso,
-                side: BorderSide.none,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                labelStyle: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: selected ? Colors.white : espresso,
-                ),
-              );
-            },
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) {
-              final p = items[i];
-              return Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: p.color,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(p.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                          const SizedBox(height: 2),
-                          Text(p.description, style: const TextStyle(fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      p.priceLabel,
-                      style: const TextStyle(color: terracotta, fontWeight: FontWeight.w700, fontSize: 14),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+  List<Product> get _filteredProducts {
+    if (_selectedCategory == 'Todos') return MenuData.products;
+    return MenuData.products
+        .where((p) => p.category == _selectedCategory)
+        .toList();
   }
-}
-
-class _PageHeader extends StatelessWidget {
-  const _PageHeader({required this.title, required this.onBack});
-
-  final String title;
-  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 20, 8),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(22, 16, 22, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(onPressed: onBack, icon: const Icon(Icons.chevron_left, size: 28)),
-          Text(title, style: displayStyle(26)),
+          // Cabeçalho "< Cardápio"
+          Row(
+            children: [
+              InkWell(
+                onTap: widget.onBack,
+                borderRadius: BorderRadius.circular(20),
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 10, top: 4, bottom: 4),
+                  child: Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+              ),
+              Text(
+                'Cardápio',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Filtros em pílula: Todos, Cafés, Salgados
+          Row(
+            children: _categories.map((category) {
+              final isSelected = _selectedCategory == category;
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = category),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppTheme.primaryDark
+                          : AppTheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Text(
+                      category,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : AppTheme.textDark,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 18),
+
+          // Lista de produtos
+          Expanded(
+            child: ListView.builder(
+              itemCount: _filteredProducts.length,
+              itemBuilder: (context, index) {
+                final product = _filteredProducts[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailScreen(product: product),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: product.cardColor,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.name,
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  product.shortSubtitle,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 12.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            AppTheme.formatPrice(product.basePrice),
+                            style: const TextStyle(
+                              color: AppTheme.terracotta,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
