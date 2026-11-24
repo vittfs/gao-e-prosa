@@ -1,144 +1,225 @@
 import 'package:flutter/material.dart';
-
 import '../services/message_db.dart';
 import '../theme.dart';
 
 class ContactScreen extends StatefulWidget {
-  const ContactScreen({super.key, required this.onBack});
-
   final VoidCallback onBack;
+
+  const ContactScreen({super.key, required this.onBack});
 
   @override
   State<ContactScreen> createState() => _ContactScreenState();
 }
 
 class _ContactScreenState extends State<ContactScreen> {
-  final _name = TextEditingController();
-  final _message = TextEditingController();
-  bool _sending = false;
+  final _nameController = TextEditingController();
+  final _messageController = TextEditingController();
+  bool _isSaving = false;
 
-  @override
-  void dispose() {
-    _name.dispose();
-    _message.dispose();
-    super.dispose();
-  }
-
-  Future<void> _send() async {
-    final name = _name.text.trim();
-    final message = _message.text.trim();
-    final messenger = ScaffoldMessenger.of(context);
+  Future<void> _sendMessage() async {
+    final name = _nameController.text.trim();
+    final message = _messageController.text.trim();
 
     if (name.isEmpty || message.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('Preencha seu nome e a mensagem.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Preencha seu nome e sua mensagem.')),
+      );
       return;
     }
 
-    setState(() => _sending = true);
-    await MessageDb.insert(name, message);
-    if (!mounted) return;
-    setState(() => _sending = false);
-    _name.clear();
-    _message.clear();
-    FocusScope.of(context).unfocus();
-    messenger.showSnackBar(const SnackBar(content: Text('Mensagem enviada. Obrigado!')));
-  }
+    setState(() => _isSaving = true);
 
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-      children: [
-        Row(
-          children: [
-            IconButton(onPressed: widget.onBack, icon: const Icon(Icons.chevron_left, size: 28)),
-            Text('Contato', style: displayStyle(26)),
-          ],
-        ),
-        const _InfoCard(title: 'Horário', text: 'Seg a Sáb, [00h] às [00h]'),
-        const SizedBox(height: 10),
-        const _InfoCard(title: 'Endereço', text: '[RUA E NÚMERO], [CIDADE]'),
-        const SizedBox(height: 16),
-        _Field(label: 'Nome', hint: 'Seu nome', controller: _name),
-        const SizedBox(height: 12),
-        _Field(label: 'Mensagem', hint: 'Como podemos ajudar?', controller: _message, lines: 3),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 50,
-          child: FilledButton(
-            onPressed: _sending ? null : _send,
-            style: FilledButton.styleFrom(
-              backgroundColor: espresso,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
-            child: const Text('Enviar'),
-          ),
-        ),
-      ],
+    await MessageDb.instance.insertMessage(
+      ContactMessage(
+        name: name,
+        message: message,
+        createdAt: DateTime.now().toIso8601String(),
+      ),
     );
+
+    _nameController.clear();
+    _messageController.clear();
+
+    if (mounted) {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mensagem enviada com sucesso!')),
+      );
+    }
   }
-}
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.text});
-
-  final String title;
-  final String text;
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(22, 16, 22, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-          const SizedBox(height: 4),
-          Text(text, style: const TextStyle(fontSize: 13)),
+          // Cabeçalho "< Contato"
+          Row(
+            children: [
+              InkWell(
+                onTap: widget.onBack,
+                borderRadius: BorderRadius.circular(20),
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 10, top: 4, bottom: 4),
+                  child: Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+              ),
+              Text(
+                'Contato',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Card Horário
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Horário',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Seg a Sáb, 08h às 20h',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Card Endereço
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Endereço',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Rua das Acácias, 240 — Centro',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Campo Nome
+          const Text(
+            'Nome',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textDark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              hintText: 'Seu nome',
+              hintStyle: const TextStyle(color: Color(0xFF9E9187), fontSize: 13.5),
+              filled: true,
+              fillColor: AppTheme.surface,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppTheme.borderLight),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppTheme.terracotta),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Campo Mensagem
+          const Text(
+            'Mensagem',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textDark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _messageController,
+            decoration: InputDecoration(
+              hintText: 'Como podemos ajudar?',
+              hintStyle: const TextStyle(color: Color(0xFF9E9187), fontSize: 13.5),
+              filled: true,
+              fillColor: AppTheme.surface,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppTheme.borderLight),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppTheme.terracotta),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Botão escuro "Enviar"
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isSaving ? null : _sendMessage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryDark,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: const StadiumBorder(),
+              ),
+              child: Text(
+                _isSaving ? 'Enviando...' : 'Enviar',
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.hint, required this.controller, this.lines = 1});
-
-  final String label;
-  final String hint;
-  final TextEditingController controller;
-  final int lines;
-
-  @override
-  Widget build(BuildContext context) {
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: fieldBorder),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          minLines: lines,
-          maxLines: lines,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: espresso.withAlpha(128), fontSize: 14),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            enabledBorder: border,
-            focusedBorder: border.copyWith(borderSide: const BorderSide(color: terracotta)),
-          ),
-        ),
-      ],
     );
   }
 }
