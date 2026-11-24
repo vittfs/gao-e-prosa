@@ -1,40 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Cores tiradas dos prints do protótipo (ajuste os hex se tiver o valor exato).
-const cream = Color(0xFFF4EBDF);
-const espresso = Color(0xFF2B1B14);
-const terracotta = Color(0xFFB5532A);
-const caramel = Color(0xFFD98C5F);
-const mustard = Color(0xFFC98D3A);
-const fieldBorder = Color(0xFFE4D3BD);
+class AppTheme {
+  static const Color background = Color(0xFFF3ECE1); // Creme de fundo
+  static const Color surface = Color(0xFFFFFFFF); // Branco dos cards
+  static const Color primaryDark = Color(0xFF291B12); // Café escuro (botões/chips)
+  static const Color terracotta = Color(0xFFA34E24); // Terracota (banner, preços, CTAs)
+  static const Color terracottaLight = Color(0xFFC87D55); // Círculo translúcido do banner
+  static const Color ochre = Color(0xFFC78A38); // Cor do card Pão de queijo
+  static const Color textDark = Color(0xFF291B12);
+  static const Color textMuted = Color(0xFF6B5D54);
+  static const Color borderLight = Color(0xFFE2D8CB);
 
-/// Os testes desligam as fontes da web (que exigem internet).
-bool useWebFonts = true;
+  static ThemeData get lightTheme {
+    final baseTextTheme = GoogleFonts.dmSansTextTheme();
 
-TextStyle displayStyle(double size) {
-  if (!useWebFonts) {
-    return TextStyle(fontSize: size, fontWeight: FontWeight.w700, color: espresso);
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: background,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: terracotta,
+        primary: primaryDark,
+        secondary: terracotta,
+        surface: surface,
+      ),
+      textTheme: baseTextTheme.copyWith(
+        headlineLarge: GoogleFonts.fraunces(
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          color: textDark,
+          height: 1.15,
+        ),
+        headlineMedium: GoogleFonts.fraunces(
+          fontSize: 24,
+          fontWeight: FontWeight.w800,
+          color: textDark,
+        ),
+        titleLarge: GoogleFonts.fraunces(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: textDark,
+        ),
+        titleMedium: GoogleFonts.dmSans(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: textDark,
+        ),
+        bodyLarge: GoogleFonts.dmSans(
+          fontSize: 14,
+          color: textDark,
+          height: 1.4,
+        ),
+        bodyMedium: GoogleFonts.dmSans(
+          fontSize: 13,
+          color: textMuted,
+        ),
+      ),
+    );
   }
-  return GoogleFonts.fraunces(
-    fontSize: size,
-    fontWeight: FontWeight.w700,
-    color: espresso,
-  );
-}
 
-ThemeData buildTheme() {
-  final base = ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: terracotta,
-      primary: terracotta,
-      surface: cream,
-    ),
-    scaffoldBackgroundColor: cream,
-  );
-  final text = useWebFonts ? GoogleFonts.dmSansTextTheme(base.textTheme) : base.textTheme;
-  return base.copyWith(
-    textTheme: text.apply(bodyColor: espresso, displayColor: espresso),
-  );
+  static String formatPrice(double value) {
+    return 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
 }
