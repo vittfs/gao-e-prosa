@@ -12,3 +12,4 @@
 6. **Qualidade** — testes automáticos (`flutter test`), checklist manual (`docs/TESTES.md`) e layout testado em telas pequenas e tablets.
 7. **Cronograma** — 3 semanas: cardápio, integração e ajustes, testes e finalização.
 8. **Próximos passos** — preços e fotos reais, pedidos online, mais categorias.
+
